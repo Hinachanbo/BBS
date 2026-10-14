@@ -4,7 +4,7 @@
 
 ## 必要なもの
 
-- Python 3.9 以上
+- Python 3.8 以上
 - Google Chrome（Selenium が headless で操作します）
 - Python パッケージ: `selenium`, `requests`, `schedule`
 

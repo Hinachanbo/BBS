@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 import re
 import time
@@ -12,6 +14,8 @@ from selenium.webdriver.common.by import By
 MAX_RES_COUNT = 1000
 PAGE_WAIT_SEC = 3
 DEFAULT_POST_TIME = "15:41"
+DELAY_RES_RANGE = (890, 900)  # このレス数の間は投稿を見送る
+DELAY_RETRY_SEC = 60
 
 
 def load_env(path: Path) -> None:
@@ -100,10 +104,16 @@ def post_message(thread_url: str, message: str) -> None:
 
 def post_to_5ch(board_url: str, keywords: list[str], message: str) -> None:
     for keyword in keywords:
-        result = find_active_thread(board_url, keyword)
-        if not result:
-            return
-        thread_id, _title, _res_count = result
+        while True:
+            result = find_active_thread(board_url, keyword)
+            if not result:
+                return
+            thread_id, _title, res_count = result
+            if not DELAY_RES_RANGE[0] <= res_count <= DELAY_RES_RANGE[1]:
+                break
+            # 次スレ移行前後の混乱を避けるため、1分待って再確認する
+            print(f"[INFO] レス数 {res_count}: {DELAY_RETRY_SEC}秒後に再確認します")
+            time.sleep(DELAY_RETRY_SEC)
         thread_url = make_thread_url(board_url, thread_id)
         print(f"[INFO] 投稿先スレッド: {thread_url}")
         post_message(thread_url, message)
